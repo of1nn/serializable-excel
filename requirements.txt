@@ -1,3 +1,6 @@
 # Main project dependencies
 # For documentation dependencies, see requirements-docs.txt
 
+# Core dependencies
+pydantic>=2.0.0,<3.0.0
+openpyxl>=3.0.0
