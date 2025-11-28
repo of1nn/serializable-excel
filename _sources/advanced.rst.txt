@@ -211,23 +211,31 @@ For advanced scenarios where dynamic column types are stored in a database, you 
 Column Parameters Summary
 -------------------------
 
-+-------------+--------------------------------------------------+------------------+
-| Parameter   | Description                                      | Applies To       |
-+=============+==================================================+==================+
-| ``header``  | Excel column header name                         | Column           |
-+-------------+--------------------------------------------------+------------------+
-| ``validator``| Function to validate/transform value when       | Column,          |
-|             | reading                                          | DynamicColumn    |
-+-------------+--------------------------------------------------+------------------+
-| ``validators``| Dict of validators per column name            | DynamicColumn    |
-+-------------+--------------------------------------------------+------------------+
-| ``getter``  | Function to extract value from model when       | Column           |
-|             | writing                                          |                  |
-+-------------+--------------------------------------------------+------------------+
-| ``default`` | Default value if cell is empty                   | Column           |
-+-------------+--------------------------------------------------+------------------+
-| ``required``| Raise error if value is missing                  | Column           |
-+-------------+--------------------------------------------------+------------------+
+.. list-table:: Column Parameters
+   :header-rows: 1
+   :widths: 20 50 30
+
+   * - Parameter
+     - Description
+     - Applies To
+   * - ``header``
+     - Excel column header name
+     - Column
+   * - ``validator``
+     - Function to validate/transform value when reading
+     - Column, DynamicColumn
+   * - ``validators``
+     - Dictionary of validators per column name
+     - DynamicColumn
+   * - ``getter``
+     - Function to extract value from model when writing
+     - Column
+   * - ``default``
+     - Default value if cell is empty
+     - Column
+   * - ``required``
+     - Raise error if value is missing
+     - Column
 
 Next Steps
 ----------
