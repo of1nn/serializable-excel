@@ -49,5 +49,5 @@ napoleon_use_rtype = True
 # Intersphinx mapping
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
-    "pydantic": ("https://docs.pydantic.dev/", None),
+    "pydantic": ("https://docs.pydantic.dev/latest/", None),
 }
