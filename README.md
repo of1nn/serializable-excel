@@ -1,6 +1,6 @@
 # SerializableExcel
 
-[![Documentation](https://readthedocs.org/projects/serializableexcel/badge/?version=latest)](https://serializableexcel.readthedocs.io/)
+[![Documentation](https://readthedocs.org/projects/serializableexcel/badge/?version=latest)](https://of1nn.github.io/serializable-excel)
 [![Python Version](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
@@ -71,4 +71,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Contributing
 
-Contributions are welcome! Please see our [Contributing Guide](https://serializableexcel.readthedocs.io/en/latest/contributing.html) for details.
+Contributions are welcome! Please see our [Contributing Guide](https://of1nn.github.io/serializable-excel/contributing.html) for details.
