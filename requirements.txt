@@ -1,0 +1,3 @@
+# Main project dependencies
+# For documentation dependencies, see requirements-docs.txt
+
