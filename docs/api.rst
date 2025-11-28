@@ -61,7 +61,7 @@ Descriptor for defining static columns in models.
 
    Descriptor for defining static columns in ExcelModel classes.
 
-   .. py:method:: __init__(header: str, validator: Optional[Callable] = None, getter: Optional[Callable] = None, default: Any = None, required: bool = False)
+   .. py:method:: __init__(header: str, validator: Optional[Callable] = None, getter: Optional[Callable] = None, getter_cell_color: Optional[Callable] = None, default: Any = None, required: bool = False)
 
       Initialize a Column descriptor.
 
@@ -71,6 +71,8 @@ Descriptor for defining static columns in models.
       :type validator: Optional[Callable[[Any], Any]]
       :param getter: Function to extract value from model when writing to Excel. Should accept the model instance and return the value.
       :type getter: Optional[Callable[[Any], Any]]
+      :param getter_cell_color: Function to determine cell style when writing to Excel. Signature: (cell_value, row_data, column_name, row_index) -> Optional[CellStyle]
+      :type getter_cell_color: Optional[Callable[[Any, Dict[str, Any], str, int], Optional[CellStyle]]]
       :param default: Default value if cell is empty
       :type default: Any
       :param required: Raise error if value is missing
@@ -80,9 +82,16 @@ Descriptor for defining static columns in models.
 
       .. code-block:: python
 
+         from serializable_excel import ExcelModel, Column, CellStyle, Colors
+
+         def highlight_age(cell_value, row_data, column_name, row_index):
+             if cell_value and cell_value > 30:
+                 return CellStyle(fill_color=Colors.WARNING)
+             return CellStyle(fill_color=Colors.UNCHANGED)
+
          class UserModel(ExcelModel):
              name: str = Column(header="Name", required=True)
-             age: int = Column(header="Age", validator=int, default=0)
+             age: int = Column(header="Age", validator=int, default=0, getter_cell_color=highlight_age)
              email: str = Column(header="Email", validator=validate_email)
 
 DynamicColumn
@@ -94,7 +103,7 @@ Descriptor for defining dynamic columns that are detected at runtime.
 
    Descriptor for defining dynamic columns that are detected at runtime in Excel files.
 
-   .. py:method:: __init__(validator: Optional[Callable[[str, str], Any]] = None, validators: Optional[Dict[str, Callable]] = None)
+   .. py:method:: __init__(validator: Optional[Callable[[str, str], Any]] = None, validators: Optional[Dict[str, Callable]] = None, getter_cell_color: Optional[Callable] = None, getters_cell_color: Optional[Dict[str, Callable]] = None)
 
       Initialize a DynamicColumn descriptor.
 
@@ -102,10 +111,16 @@ Descriptor for defining dynamic columns that are detected at runtime.
       :type validator: Optional[Callable[[str, str], Any]]
       :param validators: Dictionary mapping column names to validator functions. Each validator receives (column_name: str, value: str) and returns validated value.
       :type validators: Optional[Dict[str, Callable[[str, str], Any]]]
+      :param getter_cell_color: Function to determine cell style for all dynamic columns. Signature: (cell_value, row_data, column_name, row_index) -> Optional[CellStyle]
+      :type getter_cell_color: Optional[Callable[[Any, Dict[str, Any], str, int], Optional[CellStyle]]]
+      :param getters_cell_color: Dictionary mapping column names to style getter functions. Each function has same signature as getter_cell_color.
+      :type getters_cell_color: Optional[Dict[str, Callable[[Any, Dict[str, Any], str, int], Optional[CellStyle]]]]
 
       Example:
 
       .. code-block:: python
+
+         from serializable_excel import ExcelModel, Column, DynamicColumn, CellStyle, Colors
 
          # Single validator for all dynamic columns
          class ForecastModel(ExcelModel):
@@ -118,6 +133,71 @@ Descriptor for defining dynamic columns that are detected at runtime.
          }
          class ForecastModel(ExcelModel):
              characteristics: dict = DynamicColumn(validators=validators)
+
+         # With cell styling
+         def highlight_dynamic(cell_value, row_data, column_name, row_index):
+             if cell_value and str(cell_value).isdigit() and int(cell_value) > 100:
+                 return CellStyle(fill_color=Colors.CHANGED, font_bold=True)
+             return None
+
+         class ForecastModel(ExcelModel):
+             characteristics: dict = DynamicColumn(getter_cell_color=highlight_dynamic)
+
+CellStyle and Colors
+--------------------
+
+.. py:class:: CellStyle
+
+   Represents cell styling options for Excel cells.
+
+   .. py:attribute:: fill_color
+
+      Background color in HEX format (e.g., "FF0000" for red)
+
+   .. py:attribute:: font_color
+
+      Font color in HEX format
+
+   .. py:attribute:: font_bold
+
+      Whether the font should be bold
+
+   .. py:attribute:: font_italic
+
+      Whether the font should be italic
+
+   Example:
+
+   .. code-block:: python
+
+      from serializable_excel import CellStyle, Colors
+
+      style = CellStyle(
+          fill_color=Colors.CHANGED,
+          font_color=Colors.FONT_BLACK,
+          font_bold=True
+      )
+
+.. py:class:: Colors
+
+   Predefined color constants for common use cases.
+
+   Background colors:
+   
+   * ``CHANGED`` - Yellow (#FFFF00) - for changed values
+   * ``UNCHANGED`` - Light green (#90EE90) - for unchanged values
+   * ``ERROR`` - Light red (#FF6B6B) - for errors
+   * ``WARNING`` - Orange (#FFA500) - for warnings
+   * ``INFO`` - Light blue (#87CEEB) - for information
+   * ``NEW`` - Pale green (#98FB98) - for new entries
+
+   Font colors:
+   
+   * ``FONT_RED`` - Red (#FF0000)
+   * ``FONT_GREEN`` - Green (#008000)
+   * ``FONT_BLUE`` - Blue (#0000FF)
+   * ``FONT_BLACK`` - Black (#000000)
+   * ``FONT_GRAY`` - Gray (#808080)
 
 Exceptions
 ----------

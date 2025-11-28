@@ -208,6 +208,138 @@ For advanced scenarios where dynamic column types are stored in a database, you 
    # according to its type defined in the database
    forecasts = ForecastModel.from_excel("forecasts.xlsx", dynamic_columns=True)
 
+Cell Styling
+------------
+
+SerializableExcel allows you to conditionally style Excel cells based on cell values and row data. This is useful for highlighting changes, errors, or important information in exported Excel files.
+
+How Cell Styling Works
+~~~~~~~~~~~~~~~~~~~~~~
+
+1. **Define a style function**: Create a function that receives cell context and returns a ``CellStyle`` object
+2. **Attach to column**: Use ``getter_cell_color`` parameter in ``Column()`` or ``DynamicColumn()``
+3. **Automatic application**: Styles are automatically applied when exporting to Excel
+
+Style Function Signature
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The style function receives four parameters:
+
+.. code-block:: python
+
+   def style_function(cell_value, row_data, column_name, row_index):
+       """
+       Args:
+           cell_value: Value of the current cell
+           row_data: Dict[str, Any] with all values in the row {header: value}
+           column_name: Header name of the current column
+           row_index: Row index (0-based, data rows only)
+       Returns:
+           CellStyle or None (no styling)
+       """
+       # Your styling logic here
+       return CellStyle(fill_color=Colors.CHANGED)
+
+Example: Highlighting Changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Highlight cells based on value comparison with previous data:
+
+.. code-block:: python
+
+   from serializable_excel import ExcelModel, Column, CellStyle, Colors
+
+   def highlight_changes(cell_value, row_data, column_name, row_index):
+       """Highlight if value changed from previous export"""
+       # Get previous value from database or cache
+       user_id = row_data.get("ID")
+       old_value = get_previous_value(user_id, column_name)
+       
+       if old_value is None:
+           return CellStyle(fill_color=Colors.NEW)  # New entry
+       if old_value == cell_value:
+           return CellStyle(fill_color=Colors.UNCHANGED)  # Unchanged
+       return CellStyle(fill_color=Colors.CHANGED)  # Changed
+
+   class UserModel(ExcelModel):
+       id: int = Column(header="ID")
+       name: str = Column(header="Name", getter_cell_color=highlight_changes)
+       age: int = Column(header="Age", getter_cell_color=highlight_changes)
+
+   UserModel.to_excel(users, "output.xlsx")
+
+Example: Conditional Formatting
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Apply different styles based on cell values:
+
+.. code-block:: python
+
+   from serializable_excel import ExcelModel, Column, CellStyle, Colors
+
+   def highlight_age(cell_value, row_data, column_name, row_index):
+       """Highlight age based on value"""
+       if cell_value and cell_value > 30:
+           return CellStyle(fill_color=Colors.WARNING, font_bold=True)
+       return CellStyle(fill_color=Colors.UNCHANGED)
+
+   def highlight_email(cell_value, row_data, column_name, row_index):
+       """Highlight email if contains 'example'"""
+       if cell_value and "example" in cell_value:
+           return CellStyle(fill_color=Colors.INFO, font_italic=True)
+       return None
+
+   class UserModel(ExcelModel):
+       name: str = Column(header="Name")
+       age: int = Column(header="Age", getter_cell_color=highlight_age)
+       email: str = Column(header="Email", getter_cell_color=highlight_email)
+
+Dynamic Column Styling
+~~~~~~~~~~~~~~~~~~~~~~
+
+You can also style dynamic columns:
+
+.. code-block:: python
+
+   from serializable_excel import ExcelModel, Column, DynamicColumn, CellStyle, Colors
+
+   def highlight_dynamic(cell_value, row_data, column_name, row_index):
+       """Highlight dynamic columns with high values"""
+       if cell_value and str(cell_value).isdigit() and int(cell_value) > 100:
+           return CellStyle(fill_color=Colors.CHANGED, font_bold=True)
+       return None
+
+   class ForecastModel(ExcelModel):
+       month: str = Column(header="Month")
+       characteristics: dict = DynamicColumn(getter_cell_color=highlight_dynamic)
+
+   # Or use per-column styling
+   style_getters = {
+       "Sales Volume": lambda val, row, col, idx: CellStyle(fill_color=Colors.CHANGED) if val and int(val) > 100 else None,
+       "Priority": lambda val, row, col, idx: CellStyle(font_bold=True) if val == "High" else None,
+   }
+   class ForecastModel(ExcelModel):
+       characteristics: dict = DynamicColumn(getters_cell_color=style_getters)
+
+Available Colors
+~~~~~~~~~~~~~~~~
+
+Use predefined colors from ``Colors`` class:
+
+* ``Colors.CHANGED`` - Yellow for changed values
+* ``Colors.UNCHANGED`` - Light green for unchanged values
+* ``Colors.ERROR`` - Light red for errors
+* ``Colors.WARNING`` - Orange for warnings
+* ``Colors.INFO`` - Light blue for information
+* ``Colors.NEW`` - Pale green for new entries
+
+Or use custom HEX colors:
+
+.. code-block:: python
+
+   style = CellStyle(fill_color="FF0000")  # Red background
+   style = CellStyle(font_color="0000FF")  # Blue text
+
 Column Parameters Summary
 -------------------------
 
@@ -230,6 +362,12 @@ Column Parameters Summary
    * - ``getter``
      - Function to extract value from model when writing
      - Column
+   * - ``getter_cell_color``
+     - Function to determine cell style when writing
+     - Column, DynamicColumn
+   * - ``getters_cell_color``
+     - Dictionary of style getters per column name
+     - DynamicColumn
    * - ``default``
      - Default value if cell is empty
      - Column

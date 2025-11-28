@@ -19,6 +19,7 @@ Key Features
 * **Dynamic Columns Support**: Models support dynamic columns that can be detected in `.from_excel()` method when explicitly specified. This is useful when administrators add new characteristics or fields that need to be uploaded without modifying the model definition.
 * **Custom Validators**: Define custom validation functions for both static and dynamic columns to ensure data integrity
 * **Custom Getters**: Define getter functions to extract values from database models when exporting to Excel
+* **Cell Styling**: Conditionally style Excel cells based on cell values and row data, perfect for highlighting changes, errors, or important information
 
 Use Cases
 ---------

@@ -147,9 +147,44 @@ Export SQLAlchemy models to Excel with relationship handling:
    forecasts = db.query(Forecast).all()
    ForecastExportModel.to_excel(forecasts, "export.xlsx")
 
+Example 6: Cell Styling and Highlighting
+-----------------------------------------
+
+Export data with conditional cell styling to highlight important information:
+
+.. code-block:: python
+
+   from serializable_excel import ExcelModel, Column, CellStyle, Colors
+
+   def highlight_age(cell_value, row_data, column_name, row_index):
+       """Highlight age based on value"""
+       if cell_value and cell_value > 30:
+           return CellStyle(fill_color=Colors.WARNING, font_bold=True)
+       return CellStyle(fill_color=Colors.UNCHANGED)
+
+   def highlight_email(cell_value, row_data, column_name, row_index):
+       """Highlight email if contains 'example'"""
+       if cell_value and "example" in cell_value:
+           return CellStyle(fill_color=Colors.INFO, font_italic=True)
+       return None
+
+   class UserModel(ExcelModel):
+       name: str = Column(header="Name")
+       age: int = Column(header="Age", getter_cell_color=highlight_age)
+       email: str = Column(header="Email", getter_cell_color=highlight_email)
+
+   users = [
+       UserModel(name="Alice", age=25, email="alice@example.com"),
+       UserModel(name="Bob", age=35, email="bob@example.com"),
+   ]
+
+   UserModel.to_excel(users, "highlighted_users.xlsx")
+   # Age > 30 will be orange and bold
+   # Emails with 'example' will be light blue and italic
+
 Next Steps
 ----------
 
-* :doc:`advanced` - Learn about advanced features like dynamic columns and validators
+* :doc:`advanced` - Learn about advanced features like dynamic columns, validators, and cell styling
 * :doc:`api` - Full API reference
 

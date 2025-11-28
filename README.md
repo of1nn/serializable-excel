@@ -32,7 +32,7 @@ pip install serializable-excel
 Or install from source:
 
 ```bash
-git clone https://github.com/yourusername/serializable-excel.git
+git clone https://github.com/of1nn/serializable-excel.git
 cd serializable-excel
 pip install -r requirements.txt
 ```
@@ -49,7 +49,7 @@ pip install -r requirements.txt
 
 ## Documentation
 
-📚 **Full documentation is available at [readthedocs.io](https://serializableexcel.readthedocs.io/)**
+📚 **Full documentation is available at [of1nn.github.io/serializable-excel](https://of1nn.github.io/serializable-excel)**
 
 The documentation includes:
 - Installation guide
