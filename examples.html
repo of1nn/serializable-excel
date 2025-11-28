@@ -1,0 +1,266 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Examples &mdash; SerializableExcel 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=01f34227"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Advanced Usage" href="advanced.html" />
+    <link rel="prev" title="Quick Start" href="quickstart.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            SerializableExcel
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick Start</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#example-1-import-configuration-data">Example 1: Import Configuration Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example-2-export-report-data">Example 2: Export Report Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example-3-forecast-with-dynamic-characteristics">Example 3: Forecast with Dynamic Characteristics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example-4-data-validation-pipeline">Example 4: Data Validation Pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example-5-export-database-models">Example 5: Export Database Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#next-steps">Next Steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="advanced.html">Advanced Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">SerializableExcel</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Examples</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/examples.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="examples">
+<h1>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h1>
+<p>This page contains practical examples of using SerializableExcel in various scenarios.</p>
+<section id="example-1-import-configuration-data">
+<h2>Example 1: Import Configuration Data<a class="headerlink" href="#example-1-import-configuration-data" title="Link to this heading"></a></h2>
+<p>Import application settings from an Excel spreadsheet:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">serializable_excel</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExcelModel</span><span class="p">,</span> <span class="n">Column</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ConfigModel</span><span class="p">(</span><span class="n">ExcelModel</span><span class="p">):</span>
+    <span class="n">key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">header</span><span class="o">=</span><span class="s2">&quot;Config Key&quot;</span><span class="p">)</span>
+    <span class="n">value</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">header</span><span class="o">=</span><span class="s2">&quot;Value&quot;</span><span class="p">)</span>
+    <span class="n">environment</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">header</span><span class="o">=</span><span class="s2">&quot;Environment&quot;</span><span class="p">)</span>
+
+<span class="c1"># Read configuration from Excel</span>
+<span class="n">configs</span> <span class="o">=</span> <span class="n">ConfigModel</span><span class="o">.</span><span class="n">from_excel</span><span class="p">(</span><span class="s2">&quot;config.xlsx&quot;</span><span class="p">)</span>
+
+<span class="c1"># Use the configuration</span>
+<span class="k">for</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">configs</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">environment</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="example-2-export-report-data">
+<h2>Example 2: Export Report Data<a class="headerlink" href="#example-2-export-report-data" title="Link to this heading"></a></h2>
+<p>Export application data to Excel for reporting:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">serializable_excel</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExcelModel</span><span class="p">,</span> <span class="n">Column</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ReportModel</span><span class="p">(</span><span class="n">ExcelModel</span><span class="p">):</span>
+    <span class="n">date</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">header</span><span class="o">=</span><span class="s2">&quot;Date&quot;</span><span class="p">)</span>
+    <span class="n">revenue</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">header</span><span class="o">=</span><span class="s2">&quot;Revenue&quot;</span><span class="p">)</span>
+    <span class="n">expenses</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">header</span><span class="o">=</span><span class="s2">&quot;Expenses&quot;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">profit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">revenue</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">expenses</span>
+
+<span class="c1"># Create report data</span>
+<span class="n">reports</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">ReportModel</span><span class="p">(</span><span class="n">date</span><span class="o">=</span><span class="s2">&quot;2024-01&quot;</span><span class="p">,</span> <span class="n">revenue</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span> <span class="n">expenses</span><span class="o">=</span><span class="mi">5000</span><span class="p">),</span>
+    <span class="n">ReportModel</span><span class="p">(</span><span class="n">date</span><span class="o">=</span><span class="s2">&quot;2024-02&quot;</span><span class="p">,</span> <span class="n">revenue</span><span class="o">=</span><span class="mi">12000</span><span class="p">,</span> <span class="n">expenses</span><span class="o">=</span><span class="mi">6000</span><span class="p">),</span>
+<span class="p">]</span>
+
+<span class="c1"># Export to Excel</span>
+<span class="n">ReportModel</span><span class="o">.</span><span class="n">to_excel</span><span class="p">(</span><span class="n">reports</span><span class="p">,</span> <span class="s2">&quot;report.xlsx&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="example-3-forecast-with-dynamic-characteristics">
+<h2>Example 3: Forecast with Dynamic Characteristics<a class="headerlink" href="#example-3-forecast-with-dynamic-characteristics" title="Link to this heading"></a></h2>
+<p>Work with dynamic columns that administrators can configure:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">serializable_excel</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExcelModel</span><span class="p">,</span> <span class="n">Column</span><span class="p">,</span> <span class="n">DynamicColumn</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ForecastValueTypeEnum</span><span class="p">(</span><span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Value types for forecast characteristics&quot;&quot;&quot;</span>
+    <span class="n">INTEGER</span> <span class="o">=</span> <span class="s1">&#39;Integer&#39;</span>
+    <span class="n">STRING</span> <span class="o">=</span> <span class="s1">&#39;String&#39;</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ForecastModel</span><span class="p">(</span><span class="n">ExcelModel</span><span class="p">):</span>
+    <span class="c1"># Static fields - always present in Excel</span>
+    <span class="n">month</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">header</span><span class="o">=</span><span class="s2">&quot;Month&quot;</span><span class="p">)</span>
+    <span class="n">curator</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">header</span><span class="o">=</span><span class="s2">&quot;Curator&quot;</span><span class="p">)</span>
+    <span class="n">manager</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">header</span><span class="o">=</span><span class="s2">&quot;Manager&quot;</span><span class="p">)</span>
+    <span class="n">object_title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">header</span><span class="o">=</span><span class="s2">&quot;Object&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Dynamic characteristics - detected from Excel headers at runtime</span>
+    <span class="n">characteristics</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">DynamicColumn</span><span class="p">()</span>
+
+<span class="c1"># Excel file with additional columns:</span>
+<span class="c1"># Month | Curator | Manager | Object | Sales Volume | Priority | Region</span>
+<span class="n">forecasts</span> <span class="o">=</span> <span class="n">ForecastModel</span><span class="o">.</span><span class="n">from_excel</span><span class="p">(</span><span class="s2">&quot;forecasts.xlsx&quot;</span><span class="p">,</span> <span class="n">dynamic_columns</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Each forecast contains:</span>
+<span class="c1"># - Static fields: month, curator, manager, object_title</span>
+<span class="c1"># - characteristics dict: {&quot;Sales Volume&quot;: &quot;1000&quot;, &quot;Priority&quot;: &quot;High&quot;, &quot;Region&quot;: &quot;North&quot;}</span>
+<span class="k">for</span> <span class="n">forecast</span> <span class="ow">in</span> <span class="n">forecasts</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Forecast for </span><span class="si">{</span><span class="n">forecast</span><span class="o">.</span><span class="n">month</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">forecast</span><span class="o">.</span><span class="n">characteristics</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="example-4-data-validation-pipeline">
+<h2>Example 4: Data Validation Pipeline<a class="headerlink" href="#example-4-data-validation-pipeline" title="Link to this heading"></a></h2>
+<p>Build a validation pipeline with custom business rules:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">serializable_excel</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExcelModel</span><span class="p">,</span> <span class="n">Column</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_email</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate and normalize email&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">and</span> <span class="s1">&#39;@&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid email: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_age</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate age range&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">value</span> <span class="o">&lt;=</span> <span class="mi">150</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Age must be 0-150, got: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">value</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">UserModel</span><span class="p">(</span><span class="n">ExcelModel</span><span class="p">):</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">header</span><span class="o">=</span><span class="s2">&quot;Name&quot;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">age</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">header</span><span class="o">=</span><span class="s2">&quot;Age&quot;</span><span class="p">,</span> <span class="n">validator</span><span class="o">=</span><span class="n">validate_age</span><span class="p">)</span>
+    <span class="n">email</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">header</span><span class="o">=</span><span class="s2">&quot;Email&quot;</span><span class="p">,</span> <span class="n">validator</span><span class="o">=</span><span class="n">validate_email</span><span class="p">)</span>
+
+<span class="c1"># Read and validate data</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">users</span> <span class="o">=</span> <span class="n">UserModel</span><span class="o">.</span><span class="n">from_excel</span><span class="p">(</span><span class="s2">&quot;users.xlsx&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Successfully imported </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">users</span><span class="p">)</span><span class="si">}</span><span class="s2"> users&quot;</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Validation error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="example-5-export-database-models">
+<h2>Example 5: Export Database Models<a class="headerlink" href="#example-5-export-database-models" title="Link to this heading"></a></h2>
+<p>Export SQLAlchemy models to Excel with relationship handling:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">serializable_excel</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExcelModel</span><span class="p">,</span> <span class="n">Column</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">get_curator_name</span><span class="p">(</span><span class="n">model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract curator name from relationship&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">curator</span><span class="o">.</span><span class="n">full_name</span> <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">curator</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">get_object_title</span><span class="p">(</span><span class="n">model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get object title with fallback&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">object</span><span class="o">.</span><span class="n">title</span> <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">object</span> <span class="k">else</span> <span class="n">model</span><span class="o">.</span><span class="n">object_title</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ForecastExportModel</span><span class="p">(</span><span class="n">ExcelModel</span><span class="p">):</span>
+    <span class="n">month</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">header</span><span class="o">=</span><span class="s2">&quot;Month&quot;</span><span class="p">)</span>
+    <span class="n">curator</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">header</span><span class="o">=</span><span class="s2">&quot;Curator&quot;</span><span class="p">,</span> <span class="n">getter</span><span class="o">=</span><span class="n">get_curator_name</span><span class="p">)</span>
+    <span class="n">manager</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">header</span><span class="o">=</span><span class="s2">&quot;Manager&quot;</span><span class="p">,</span> <span class="n">getter</span><span class="o">=</span><span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">full_name</span><span class="p">)</span>
+    <span class="n">object_title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">header</span><span class="o">=</span><span class="s2">&quot;Object&quot;</span><span class="p">,</span> <span class="n">getter</span><span class="o">=</span><span class="n">get_object_title</span><span class="p">)</span>
+
+<span class="c1"># Export SQLAlchemy models</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy.orm</span><span class="w"> </span><span class="kn">import</span> <span class="n">Session</span>
+<span class="n">forecasts</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">Forecast</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="n">ForecastExportModel</span><span class="o">.</span><span class="n">to_excel</span><span class="p">(</span><span class="n">forecasts</span><span class="p">,</span> <span class="s2">&quot;export.xlsx&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="next-steps">
+<h2>Next Steps<a class="headerlink" href="#next-steps" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="advanced.html"><span class="doc">Advanced Usage</span></a> - Learn about advanced features like dynamic columns and validators</p></li>
+<li><p><a class="reference internal" href="api.html"><span class="doc">API Reference</span></a> - Full API reference</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="quickstart.html" class="btn btn-neutral float-left" title="Quick Start" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="advanced.html" class="btn btn-neutral float-right" title="Advanced Usage" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, SerializableExcel Contributors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
