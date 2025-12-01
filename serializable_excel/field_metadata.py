@@ -71,10 +71,7 @@ class FieldMetadataExtractor:
         Returns:
             Dictionary mapping header names to field names
         """
-        return {
-            column.header: field_name
-            for field_name, column in column_fields.items()
-        }
+        return {column.header: field_name for field_name, column in column_fields.items()}
 
     @staticmethod
     def get_static_headers(column_fields: Dict[str, Column]) -> set:

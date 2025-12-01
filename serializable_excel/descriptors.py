@@ -2,7 +2,10 @@
 Descriptors for defining columns in ExcelModel classes.
 """
 
-from typing import Any, Callable, Dict, Optional
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
+
+if TYPE_CHECKING:
+    from serializable_excel.excel_types import ExcelType
 
 
 class BaseDescriptor:
@@ -47,6 +50,9 @@ class Column(BaseDescriptor):
                           - column_name: Header name of the current column
                           - row_index: Row index (0-based, data rows only)
                           Returns CellStyle or None (no styling).
+        excel_type: ExcelType instance to control cell formatting in Excel.
+                   If not specified, type is inferred from Python type annotation.
+                   Examples: ExcelDate("%d.%m.%Y"), ExcelNumber(decimal_places=2), ExcelCurrency()
         default: Default value if cell is empty
         required: Raise error if value is missing
     """
@@ -57,6 +63,7 @@ class Column(BaseDescriptor):
         validator: Optional[Callable[[Any], Any]] = None,
         getter: Optional[Callable[[Any], Any]] = None,
         getter_cell_color: Optional[Callable[..., Any]] = None,
+        excel_type: Optional["ExcelType"] = None,
         default: Any = None,
         required: bool = False,
     ):
@@ -65,6 +72,7 @@ class Column(BaseDescriptor):
         self.validator = validator
         self.getter = getter
         self.getter_cell_color = getter_cell_color
+        self.excel_type = excel_type
         self.default = default
         self.required = required
 
@@ -86,6 +94,9 @@ class DynamicColumn(BaseDescriptor):
                           Signature: (cell_value, row_data, column_name, row_index) -> Optional[CellStyle]
         getters_cell_color: Dictionary mapping column names to style getter functions.
                            Each function has same signature as getter_cell_color.
+        type_getter: Function to determine Excel type for dynamic columns.
+                    Signature: (column_name: str) -> Optional[ExcelType]
+                    Returns ExcelType instance or None (defaults to ExcelText).
     """
 
     def __init__(
@@ -94,18 +105,18 @@ class DynamicColumn(BaseDescriptor):
         validators: Optional[Dict[str, Callable[[str, Any], Any]]] = None,
         getter_cell_color: Optional[Callable[..., Any]] = None,
         getters_cell_color: Optional[Dict[str, Callable[..., Any]]] = None,
+        type_getter: Optional[Callable[[str], Optional["ExcelType"]]] = None,
     ):
         super().__init__()
         if validator is not None and validators is not None:
             raise ValueError("Cannot specify both validator and validators")
         if getter_cell_color is not None and getters_cell_color is not None:
-            raise ValueError(
-                "Cannot specify both getter_cell_color and getters_cell_color"
-            )
+            raise ValueError("Cannot specify both getter_cell_color and getters_cell_color")
         self.validator = validator
         self.validators = validators or {}
         self.getter_cell_color = getter_cell_color
         self.getters_cell_color = getters_cell_color or {}
+        self.type_getter = type_getter
 
     def _get_default(self) -> Dict[str, Any]:
         """Return default value (empty dict) for dynamic columns."""
@@ -146,3 +157,17 @@ class DynamicColumn(BaseDescriptor):
             return self.getters_cell_color[column_name]
         # Then check for general getter
         return self.getter_cell_color
+
+    def get_excel_type(self, column_name: str) -> Optional["ExcelType"]:
+        """
+        Get the Excel type for a specific dynamic column.
+
+        Args:
+            column_name: Name of the dynamic column
+
+        Returns:
+            ExcelType instance or None (defaults to ExcelText)
+        """
+        if self.type_getter is not None:
+            return self.type_getter(column_name)
+        return None

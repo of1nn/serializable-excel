@@ -2,13 +2,16 @@
 Excel file reader with separation of concerns.
 """
 
+from io import BytesIO
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Type, TypeVar
-
-from openpyxl import load_workbook
+from typing import Any, Dict, List, Optional, Type, TypeVar, Union
 
 from serializable_excel.descriptors import Column, DynamicColumn
-from serializable_excel.excel_io import read_excel_headers, read_excel_rows
+from serializable_excel.excel_io import (
+    load_workbook_from_source,
+    read_excel_headers,
+    read_excel_rows,
+)
 from serializable_excel.exceptions import ColumnNotFoundError, ValidationError
 from serializable_excel.field_metadata import FieldMetadataExtractor
 from serializable_excel.validators import FieldValidator
@@ -40,39 +43,39 @@ class ExcelReader:
     def read(
         self,
         model_class: Type[T],
-        file_path: str,
+        source: Union[str, bytes, BytesIO],
         dynamic_columns: bool = False,
     ) -> List[T]:
         """
-        Read models from an Excel file.
+        Read models from an Excel file, bytes, or BytesIO.
 
         Args:
             model_class: Model class to instantiate
-            file_path: Path to the Excel file
+            source: Path to the Excel file, bytes, or BytesIO object
             dynamic_columns: Enable dynamic column detection
 
         Returns:
             List of model instances
 
         Raises:
-            FileNotFoundError: If file doesn't exist
+            FileNotFoundError: If file doesn't exist (only for file paths)
             ValidationError: If validation fails
             ColumnNotFoundError: If required column is missing
         """
-        file_path_obj = Path(file_path)
-        if not file_path_obj.exists():
-            raise FileNotFoundError(f"Excel file not found: {file_path}")
+        # Validate file path exists (only for string paths)
+        if isinstance(source, str):
+            file_path_obj = Path(source)
+            if not file_path_obj.exists():
+                raise FileNotFoundError(f"Excel file not found: {source}")
 
-        wb = load_workbook(file_path, read_only=True, data_only=True)
+        wb = load_workbook_from_source(source, read_only=True, data_only=True)
         try:
             ws = wb.active
             headers = read_excel_headers(ws, header_row=1)
             if not headers:
                 raise ValueError("No headers found in Excel file")
 
-            column_fields = self.metadata_extractor.get_column_fields(
-                model_class
-            )
+            column_fields = self.metadata_extractor.get_column_fields(model_class)
             dynamic_field = (
                 self.metadata_extractor.get_dynamic_column_field(model_class)
                 if dynamic_columns
@@ -80,11 +83,7 @@ class ExcelReader:
             )
 
             self._validate_required_columns(column_fields, headers)
-            header_to_field = (
-                self.metadata_extractor.build_header_to_field_mapping(
-                    column_fields
-                )
-            )
+            header_to_field = self.metadata_extractor.build_header_to_field_mapping(column_fields)
             dynamic_headers = self._identify_dynamic_headers(
                 headers, column_fields, dynamic_columns, dynamic_field
             )
@@ -123,9 +122,7 @@ class ExcelReader:
         """Identify dynamic column headers."""
         dynamic_headers: Dict[int, str] = {}
         if dynamic_columns and dynamic_field is not None:
-            static_headers = self.metadata_extractor.get_static_headers(
-                column_fields
-            )
+            static_headers = self.metadata_extractor.get_static_headers(column_fields)
             for col_idx, header in headers.items():
                 if header not in static_headers:
                     dynamic_headers[col_idx] = header
@@ -159,9 +156,7 @@ class ExcelReader:
             except Exception as e:
                 if isinstance(e, (ValidationError, ColumnNotFoundError)):
                     raise
-                raise ValidationError(
-                    f"Row {row_idx}: Error creating model instance: {e}"
-                ) from e
+                raise ValidationError(f"Row {row_idx}: Error creating model instance: {e}") from e
         return instances
 
     def _build_instance_data(

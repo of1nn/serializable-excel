@@ -50,6 +50,7 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 cover/
+tests/test_output/
 
 # Translations
 *.mo
@@ -193,3 +194,5 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 .xlsx
+check_before_publish.py
+QUICK_START_PUBLISH

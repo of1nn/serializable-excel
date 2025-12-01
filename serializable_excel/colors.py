@@ -71,11 +71,7 @@ class CellStyleApplier:
             )
 
         # Apply font styling
-        if (
-            style.font_color is not None
-            or style.font_bold
-            or style.font_italic
-        ):
+        if style.font_color is not None or style.font_bold or style.font_italic:
             cell.font = Font(
                 color=style.font_color,
                 bold=style.font_bold,

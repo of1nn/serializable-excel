@@ -182,6 +182,115 @@ Export data with conditional cell styling to highlight important information:
    # Age > 30 will be orange and bold
    # Emails with 'example' will be light blue and italic
 
+Example 7: Web API Integration
+------------------------------
+
+Use SerializableExcel with FastAPI or other web frameworks to handle Excel uploads and downloads:
+
+.. code-block:: python
+
+   from io import BytesIO
+   from fastapi import FastAPI, UploadFile, File
+   from fastapi.responses import StreamingResponse
+   from serializable_excel import ExcelModel, Column
+
+   app = FastAPI()
+
+   class UserModel(ExcelModel):
+       name: str = Column(header="Name")
+       email: str = Column(header="Email")
+       age: int = Column(header="Age")
+
+   @app.post("/upload")
+   async def upload_excel(file: UploadFile = File(...)):
+       """Import users from uploaded Excel file"""
+       # Read bytes from uploaded file
+       file_bytes = await file.read()
+       
+       # Parse Excel directly from bytes
+       users = UserModel.from_excel(file_bytes)
+       
+       return {"imported": len(users), "users": [u.model_dump() for u in users]}
+
+   @app.get("/download")
+   async def download_excel():
+       """Export users to Excel and return as download"""
+       # Get users from database
+       users = [
+           UserModel(name="Alice", email="alice@example.com", age=30),
+           UserModel(name="Bob", email="bob@example.com", age=25),
+       ]
+       
+       # Generate Excel as bytes
+       excel_bytes = UserModel.to_excel(users, return_bytes=True)
+       
+       # Return as streaming response
+       return StreamingResponse(
+           BytesIO(excel_bytes),
+           media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+           headers={"Content-Disposition": "attachment; filename=users.xlsx"}
+       )
+
+   @app.post("/transform")
+   async def transform_excel(file: UploadFile = File(...)):
+       """Process Excel file and return modified version"""
+       file_bytes = await file.read()
+       
+       # Parse and modify data
+       users = UserModel.from_excel(file_bytes)
+       for user in users:
+           user.email = user.email.lower()
+       
+       # Return transformed Excel
+       result_bytes = UserModel.to_excel(users, return_bytes=True)
+       return StreamingResponse(
+           BytesIO(result_bytes),
+           media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+           headers={"Content-Disposition": "attachment; filename=transformed.xlsx"}
+       )
+
+Example 8: Flask Integration
+----------------------------
+
+Using SerializableExcel with Flask:
+
+.. code-block:: python
+
+   from io import BytesIO
+   from flask import Flask, request, send_file
+   from serializable_excel import ExcelModel, Column
+
+   app = Flask(__name__)
+
+   class ProductModel(ExcelModel):
+       sku: str = Column(header="SKU")
+       name: str = Column(header="Product Name")
+       price: float = Column(header="Price")
+
+   @app.route("/upload", methods=["POST"])
+   def upload():
+       """Upload and parse Excel file"""
+       file = request.files["file"]
+       products = ProductModel.from_excel(file.read())
+       return {"count": len(products)}
+
+   @app.route("/download")
+   def download():
+       """Generate and download Excel file"""
+       products = [
+           ProductModel(sku="A001", name="Widget", price=9.99),
+           ProductModel(sku="A002", name="Gadget", price=19.99),
+       ]
+       
+       excel_bytes = ProductModel.to_excel(products, return_bytes=True)
+       
+       return send_file(
+           BytesIO(excel_bytes),
+           mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+           as_attachment=True,
+           download_name="products.xlsx"
+       )
+
 Next Steps
 ----------
 

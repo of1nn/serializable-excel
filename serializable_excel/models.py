@@ -2,7 +2,8 @@
 ExcelModel - Base class for Excel-serializable Pydantic models.
 """
 
-from typing import Dict, List, Type, TypeVar
+from io import BytesIO
+from typing import Dict, List, Optional, Type, TypeVar, Union
 
 from pydantic import BaseModel
 
@@ -62,37 +63,72 @@ class ExcelModel(BaseModel):
 
     @classmethod
     def from_excel(
-        cls: Type[T], file_path: str, dynamic_columns: bool = False
+        cls: Type[T],
+        source: Union[str, bytes, BytesIO],
+        dynamic_columns: bool = False,
     ) -> List[T]:
         """
-        Read models from an Excel file.
+        Read models from an Excel file, bytes, or BytesIO.
 
         Args:
-            file_path: Path to the Excel file (.xlsx)
+            source: Path to the Excel file (.xlsx), bytes, or BytesIO object
             dynamic_columns: Enable detection of additional columns not defined in model
 
         Returns:
             List of model instances
 
         Raises:
-            FileNotFoundError: If the Excel file doesn't exist
+            FileNotFoundError: If the Excel file doesn't exist (only for file paths)
             ValidationError: If validation fails
             ColumnNotFoundError: If a required column is not found
+
+        Example:
+            # From file
+            users = UserModel.from_excel("users.xlsx")
+
+            # From bytes (e.g., from API request)
+            users = UserModel.from_excel(request.files['file'].read())
+
+            # From BytesIO
+            users = UserModel.from_excel(BytesIO(file_bytes))
         """
         reader = cls._get_reader()
-        return reader.read(cls, file_path, dynamic_columns)
+        return reader.read(cls, source, dynamic_columns)
 
     @classmethod
-    def to_excel(cls, instances: List[T], file_path: str) -> None:
+    def to_excel(
+        cls,
+        instances: List[T],
+        file_path: Optional[str] = None,
+        return_bytes: bool = False,
+    ) -> Optional[bytes]:
         """
-        Export model instances to an Excel file.
+        Export model instances to an Excel file or return as bytes.
 
         Args:
             instances: List of model instances to export
-            file_path: Path where to save the Excel file (.xlsx)
+            file_path: Path where to save the Excel file (.xlsx).
+                       Required if return_bytes=False.
+            return_bytes: If True, return Excel content as bytes instead of saving to file.
+
+        Returns:
+            bytes if return_bytes=True, None otherwise
 
         Raises:
             ValueError: If instances list is empty or invalid
+            ValueError: If file_path is not provided when return_bytes=False
+
+        Example:
+            # Save to file
+            UserModel.to_excel(users, "users.xlsx")
+
+            # Return bytes for API response
+            excel_bytes = UserModel.to_excel(users, return_bytes=True)
+            return StreamingResponse(
+                BytesIO(excel_bytes),
+                media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                headers={"Content-Disposition": "attachment; filename=users.xlsx"}
+            )
         """
         writer = cls._get_writer()
-        writer.write(cls, instances, file_path)
+        return writer.write(cls, instances, file_path, return_bytes)

@@ -1,7 +1,113 @@
 Advanced Usage
 ==============
 
-This section covers advanced features of SerializableExcel, including dynamic columns, custom validators, and getters.
+This section covers advanced features of SerializableExcel, including bytes/stream support for APIs, dynamic columns, custom validators, and getters.
+
+Working with Bytes and Streams
+------------------------------
+
+SerializableExcel supports working with bytes and BytesIO objects, making it perfect for web API integration where files are exchanged as byte streams rather than saved to disk.
+
+Reading from Bytes/BytesIO
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``from_excel()`` method accepts file paths, bytes, or BytesIO objects:
+
+.. code-block:: python
+
+   from io import BytesIO
+   from serializable_excel import ExcelModel, Column
+
+   class UserModel(ExcelModel):
+       name: str = Column(header="Name")
+       email: str = Column(header="Email")
+
+   # From file path (traditional)
+   users = UserModel.from_excel("users.xlsx")
+
+   # From bytes (e.g., from HTTP request body)
+   file_bytes = request.files['file'].read()
+   users = UserModel.from_excel(file_bytes)
+
+   # From BytesIO (e.g., from file-like object)
+   stream = BytesIO(uploaded_file.read())
+   users = UserModel.from_excel(stream)
+
+Writing to Bytes
+~~~~~~~~~~~~~~~~
+
+The ``to_excel()`` method can return bytes instead of writing to a file:
+
+.. code-block:: python
+
+   from io import BytesIO
+
+   # Save to file (traditional)
+   UserModel.to_excel(users, "output.xlsx")
+
+   # Return as bytes
+   excel_bytes = UserModel.to_excel(users, return_bytes=True)
+
+   # Use in API response (FastAPI/Starlette)
+   from starlette.responses import StreamingResponse
+   return StreamingResponse(
+       BytesIO(excel_bytes),
+       media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+       headers={"Content-Disposition": "attachment; filename=export.xlsx"}
+   )
+
+   # Use in Flask
+   from flask import send_file
+   return send_file(
+       BytesIO(excel_bytes),
+       mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+       as_attachment=True,
+       download_name="export.xlsx"
+   )
+
+Complete API Example
+~~~~~~~~~~~~~~~~~~~~
+
+Here's a complete FastAPI example showing upload and download:
+
+.. code-block:: python
+
+   from io import BytesIO
+   from fastapi import FastAPI, UploadFile, File
+   from fastapi.responses import StreamingResponse
+   from serializable_excel import ExcelModel, Column, CellStyle, Colors
+
+   app = FastAPI()
+
+   class OrderModel(ExcelModel):
+       order_id: str = Column(header="Order ID")
+       customer: str = Column(header="Customer")
+       amount: float = Column(header="Amount")
+
+   @app.post("/orders/import")
+   async def import_orders(file: UploadFile = File(...)):
+       """Import orders from Excel file"""
+       content = await file.read()
+       orders = OrderModel.from_excel(content)
+       
+       # Save to database
+       for order in orders:
+           db.save(order)
+       
+       return {"imported": len(orders)}
+
+   @app.get("/orders/export")
+   async def export_orders():
+       """Export orders to Excel file"""
+       orders = db.get_all_orders()
+       
+       excel_bytes = OrderModel.to_excel(orders, return_bytes=True)
+       
+       return StreamingResponse(
+           BytesIO(excel_bytes),
+           media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+           headers={"Content-Disposition": "attachment; filename=orders.xlsx"}
+       )
 
 Dynamic Columns
 ---------------

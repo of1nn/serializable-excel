@@ -15,42 +15,70 @@ Methods
 
    Base class for Excel-serializable Pydantic models.
 
-   .. py:method:: from_excel(file_path: str, dynamic_columns: bool = False) -> List[ExcelModel]
+   .. py:method:: from_excel(source: Union[str, bytes, BytesIO], dynamic_columns: bool = False) -> List[ExcelModel]
 
-      Read models from an Excel file.
+      Read models from an Excel file, bytes, or BytesIO.
 
-      :param file_path: Path to the Excel file (.xlsx)
-      :type file_path: str
+      :param source: Path to the Excel file (.xlsx), bytes, or BytesIO object
+      :type source: Union[str, bytes, BytesIO]
       :param dynamic_columns: Enable detection of additional columns not defined in model
       :type dynamic_columns: bool
       :returns: List of model instances
       :rtype: List[ExcelModel]
-      :raises FileNotFoundError: If the Excel file doesn't exist
+      :raises FileNotFoundError: If the Excel file doesn't exist (only for file paths)
       :raises ValueError: If validation fails
 
       Example:
 
       .. code-block:: python
 
+         # From file
          users = UserModel.from_excel("users.xlsx")
          forecasts = ForecastModel.from_excel("forecasts.xlsx", dynamic_columns=True)
 
-   .. py:method:: to_excel(instances: List[ExcelModel], file_path: str) -> None
+         # From bytes (e.g., from API request)
+         file_bytes = request.files['file'].read()
+         users = UserModel.from_excel(file_bytes)
 
-      Export model instances to an Excel file.
+         # From BytesIO
+         from io import BytesIO
+         stream = BytesIO(uploaded_file.read())
+         users = UserModel.from_excel(stream)
+
+   .. py:method:: to_excel(instances: List[ExcelModel], file_path: Optional[str] = None, return_bytes: bool = False) -> Optional[bytes]
+
+      Export model instances to an Excel file or return as bytes.
 
       :param instances: List of model instances to export
       :type instances: List[ExcelModel]
-      :param file_path: Path where to save the Excel file (.xlsx)
-      :type file_path: str
+      :param file_path: Path where to save the Excel file (.xlsx). Required if return_bytes=False.
+      :type file_path: Optional[str]
+      :param return_bytes: If True, return Excel content as bytes instead of saving to file
+      :type return_bytes: bool
+      :returns: bytes if return_bytes=True, None otherwise
+      :rtype: Optional[bytes]
       :raises ValueError: If instances list is empty or invalid
+      :raises ValueError: If file_path is not provided when return_bytes=False
 
       Example:
 
       .. code-block:: python
 
+         # Save to file
          users = [UserModel(name="Alice", age=30)]
          UserModel.to_excel(users, "output.xlsx")
+
+         # Return bytes for API response
+         excel_bytes = UserModel.to_excel(users, return_bytes=True)
+         
+         # Use with FastAPI/Starlette
+         from io import BytesIO
+         from starlette.responses import StreamingResponse
+         return StreamingResponse(
+             BytesIO(excel_bytes),
+             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+             headers={"Content-Disposition": "attachment; filename=users.xlsx"}
+         )
 
 Column
 ------

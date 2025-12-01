@@ -16,11 +16,15 @@ class UserModel(ExcelModel):
     age: int = Column(header="Age")
     email: str = Column(header="Email")
 
-# Read from Excel
+# Read from Excel file
 users = UserModel.from_excel("users.xlsx")
 
-# Write to Excel
+# Write to Excel file
 UserModel.to_excel(users, "output.xlsx")
+
+# Or work with bytes for API usage
+excel_bytes = UserModel.to_excel(users, return_bytes=True)
+users = UserModel.from_excel(file_bytes)
 ```
 
 ## Installation
@@ -41,11 +45,13 @@ pip install -r requirements.txt
 
 - **🔄 Bidirectional Conversion**: Seamlessly convert between Excel sheets and Pydantic models
 - **📝 Declarative Syntax**: Define models using familiar SQLAlchemy-like syntax
+- **🌐 API Ready**: Work with bytes/BytesIO for seamless web API integration (FastAPI, Flask, etc.)
 - **🔍 Automatic Type Inference**: Smart type detection from Excel data
 - **✅ Built-in Validation**: Automatic validation of data types and constraints
 - **🔧 Dynamic Columns**: Support for runtime-detected columns perfect for admin-configurable fields
 - **🛡️ Custom Validators**: Define validation functions for data integrity
 - **📤 Custom Getters**: Extract values from complex database models when exporting
+- **🎨 Cell Styling**: Conditional cell formatting with colors, fonts, and styles
 
 ## Documentation
 

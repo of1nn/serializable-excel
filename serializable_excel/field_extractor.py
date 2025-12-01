@@ -34,9 +34,7 @@ class FieldExtractor:
             try:
                 return column.getter(instance)
             except Exception as e:
-                raise ValueError(
-                    f"Error calling getter for field '{field_name}': {e}"
-                ) from e
+                raise ValueError(f"Error calling getter for field '{field_name}': {e}") from e
         return getattr(instance, field_name, column.default)
 
     @staticmethod

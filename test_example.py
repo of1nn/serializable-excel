@@ -76,9 +76,7 @@ def test_dynamic_columns():
     class ForecastModel(ExcelModel):
         month: str = Column(header="Month")
         manager: str = Column(header="Manager")
-        characteristics: dict = DynamicColumn(
-            getter_cell_color=highlight_dynamic
-        )
+        characteristics: dict = DynamicColumn(getter_cell_color=highlight_dynamic)
 
     # Create data with dynamic columns
     forecasts = [
@@ -136,12 +134,56 @@ def test_validation():
     print()
 
 
+def test_bytes_stream():
+    """Test bytes and BytesIO stream support for API usage."""
+    from io import BytesIO
+
+    print("=" * 50)
+    print("Test 4: Bytes and BytesIO Stream Support")
+    print("=" * 50)
+
+    class ApiUserModel(ExcelModel):
+        name: str = Column(header="Name")
+        email: str = Column(header="Email")
+
+    # Create test data
+    users = [
+        ApiUserModel(name="Alice", email="alice@example.com"),
+        ApiUserModel(name="Bob", email="bob@example.com"),
+    ]
+
+    # Test: Export to bytes (for API response)
+    excel_bytes = ApiUserModel.to_excel(users, return_bytes=True)
+    print(f"[+] Generated Excel as bytes: {len(excel_bytes)} bytes")
+    print(f"    First bytes: {excel_bytes[:4]}")  # Should be PK (ZIP signature)
+
+    # Test: Import from bytes (simulating API request)
+    loaded_from_bytes = ApiUserModel.from_excel(excel_bytes)
+    print(f"[+] Loaded from bytes: {len(loaded_from_bytes)} records")
+    for user in loaded_from_bytes:
+        print(user)
+
+    # Test: Import from BytesIO (alternative API usage)
+    stream = BytesIO(excel_bytes)
+    loaded_from_stream = ApiUserModel.from_excel(stream)
+    print(f"[+] Loaded from BytesIO: {len(loaded_from_stream)} records")
+
+    # Verify data integrity
+    assert len(loaded_from_bytes) == len(users)
+    assert loaded_from_bytes[0].name == users[0].name
+    assert loaded_from_bytes[1].email == users[1].email
+    print("[+] Data integrity verified!")
+
+    print()
+
+
 if __name__ == "__main__":
     print("\n>>> Running SerializableExcel Tests\n")
 
     test_basic_export_import()
     test_dynamic_columns()
     test_validation()
+    test_bytes_stream()
 
     print("=" * 50)
     print("[OK] All tests completed!")
@@ -149,4 +191,5 @@ if __name__ == "__main__":
     print("  - test_output.xlsx (with age and email highlighting)")
     print("  - test_forecast.xlsx (with dynamic columns)")
     print("  - test_validated.xlsx (with validation)")
+    print("Test 4 uses only bytes/streams (no files created)")
     print("=" * 50)

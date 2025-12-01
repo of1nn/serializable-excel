@@ -2,17 +2,19 @@
 Functions for reading and writing Excel files using openpyxl.
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+from io import BytesIO
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
 from serializable_excel.colors import CellStyle, CellStyleApplier
 
+if TYPE_CHECKING:
+    from serializable_excel.excel_types import ExcelType
 
-def read_excel_headers(
-    worksheet: Worksheet, header_row: int = 1
-) -> Dict[int, str]:
+
+def read_excel_headers(worksheet: Worksheet, header_row: int = 1) -> Dict[int, str]:
     """
     Read column headers from an Excel worksheet.
 
@@ -61,22 +63,46 @@ def read_excel_rows(
     return rows
 
 
-def write_excel(
+def load_workbook_from_source(
+    source: Union[str, bytes, BytesIO],
+    read_only: bool = True,
+    data_only: bool = True,
+) -> Workbook:
+    """
+    Load a workbook from a file path, bytes, or BytesIO.
+
+    Args:
+        source: File path, bytes, or BytesIO object
+        read_only: Open workbook in read-only mode
+        data_only: Load only cell values, not formulas
+
+    Returns:
+        openpyxl Workbook object
+    """
+    if isinstance(source, bytes):
+        source = BytesIO(source)
+    return load_workbook(source, read_only=read_only, data_only=data_only)
+
+
+def _build_workbook(
     headers: Dict[str, int],
     data_rows: List[Dict[str, Any]],
-    file_path: str,
     sheet_name: str = "Sheet1",
     cell_colors: Optional[Dict[Tuple[int, int], CellStyle]] = None,
-):
+    column_types: Optional[Dict[str, "ExcelType"]] = None,
+) -> Workbook:
     """
-    Write data to an Excel file.
+    Build a workbook with headers and data.
 
     Args:
         headers: Dictionary mapping header names to column indices (1-indexed)
         data_rows: List of dictionaries mapping header names to values
-        file_path: Path where to save the Excel file
         sheet_name: Name of the worksheet
         cell_colors: Dictionary mapping (row, col) tuples to CellStyle objects
+        column_types: Dictionary mapping header names to ExcelType objects
+
+    Returns:
+        openpyxl Workbook object
     """
     wb = Workbook()
     ws = wb.active
@@ -90,7 +116,17 @@ def write_excel(
     for row_idx, row_data in enumerate(data_rows, start=2):
         for header, col_idx in headers.items():
             value = row_data.get(header)
-            cell = ws.cell(row=row_idx, column=col_idx, value=value)
+            cell = ws.cell(row=row_idx, column=col_idx)
+
+            # Apply Excel type formatting if specified (sets value and format)
+            if column_types is not None and header in column_types:
+                excel_type = column_types[header]
+                if excel_type is not None:
+                    excel_type.apply_format(cell, value)
+                else:
+                    cell.value = value
+            else:
+                cell.value = value
 
             # Apply cell color if specified
             if cell_colors is not None:
@@ -98,5 +134,54 @@ def write_excel(
                 if style is not None:
                     CellStyleApplier.apply(cell, style)
 
-    # Save the workbook
+    return wb
+
+
+def write_excel(
+    headers: Dict[str, int],
+    data_rows: List[Dict[str, Any]],
+    file_path: str,
+    sheet_name: str = "Sheet1",
+    cell_colors: Optional[Dict[Tuple[int, int], CellStyle]] = None,
+    column_types: Optional[Dict[str, "ExcelType"]] = None,
+) -> None:
+    """
+    Write data to an Excel file.
+
+    Args:
+        headers: Dictionary mapping header names to column indices (1-indexed)
+        data_rows: List of dictionaries mapping header names to values
+        file_path: Path where to save the Excel file
+        sheet_name: Name of the worksheet
+        cell_colors: Dictionary mapping (row, col) tuples to CellStyle objects
+        column_types: Dictionary mapping header names to ExcelType objects
+    """
+    wb = _build_workbook(headers, data_rows, sheet_name, cell_colors, column_types)
     wb.save(file_path)
+
+
+def write_excel_to_bytes(
+    headers: Dict[str, int],
+    data_rows: List[Dict[str, Any]],
+    sheet_name: str = "Sheet1",
+    cell_colors: Optional[Dict[Tuple[int, int], CellStyle]] = None,
+    column_types: Optional[Dict[str, "ExcelType"]] = None,
+) -> bytes:
+    """
+    Write data to Excel format and return as bytes.
+
+    Args:
+        headers: Dictionary mapping header names to column indices (1-indexed)
+        data_rows: List of dictionaries mapping header names to values
+        sheet_name: Name of the worksheet
+        cell_colors: Dictionary mapping (row, col) tuples to CellStyle objects
+        column_types: Dictionary mapping header names to ExcelType objects
+
+    Returns:
+        Excel file content as bytes
+    """
+    wb = _build_workbook(headers, data_rows, sheet_name, cell_colors, column_types)
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+    return output.getvalue()
