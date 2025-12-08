@@ -34,7 +34,9 @@ class FieldExtractor:
             try:
                 return column.getter(instance)
             except Exception as e:
-                raise ValueError(f"Error calling getter for field '{field_name}': {e}") from e
+                raise ValueError(
+                    f"Error calling getter for field '{field_name}': {e}"
+                ) from e
         return getattr(instance, field_name, column.default)
 
     @staticmethod
@@ -54,7 +56,18 @@ class FieldExtractor:
         Returns:
             Dictionary mapping keys to values
         """
-        dynamic_data = getattr(instance, dynamic_field.name, {})
+        if dynamic_field.getter is not None:
+            try:
+                dynamic_data = dynamic_field.getter(instance)
+            except Exception as e:
+                raise ValueError(
+                    f"Error calling getter for dynamic field '{dynamic_field.name}': {e}"
+                ) from e
+        else:
+            dynamic_data = getattr(instance, dynamic_field.name, {})
+
+        if dynamic_data is None:
+            dynamic_data = {}
         if not isinstance(dynamic_data, dict):
             return {}
 

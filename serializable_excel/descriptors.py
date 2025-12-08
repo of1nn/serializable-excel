@@ -63,7 +63,7 @@ class Column(BaseDescriptor):
         validator: Optional[Callable[[Any], Any]] = None,
         getter: Optional[Callable[[Any], Any]] = None,
         getter_cell_color: Optional[Callable[..., Any]] = None,
-        excel_type: Optional["ExcelType"] = None,
+        excel_type: Optional['ExcelType'] = None,
         default: Any = None,
         required: bool = False,
     ):
@@ -86,6 +86,9 @@ class DynamicColumn(BaseDescriptor):
     Descriptor for defining dynamic columns that are detected at runtime in Excel files.
 
     Args:
+        getter: Function to extract dynamic values when exporting to Excel.
+                Should accept the model instance and return a dict[str, Any]
+                where keys are column names and values are the corresponding cell values.
         validator: Function to validate all dynamic columns.
                   Receives (column_name: str, value: str) and returns validated value.
         validators: Dictionary mapping column names to validator functions.
@@ -101,17 +104,21 @@ class DynamicColumn(BaseDescriptor):
 
     def __init__(
         self,
+        getter: Optional[Callable[[Any], Dict[str, Any]]] = None,
         validator: Optional[Callable[[str, Any], Any]] = None,
         validators: Optional[Dict[str, Callable[[str, Any], Any]]] = None,
         getter_cell_color: Optional[Callable[..., Any]] = None,
         getters_cell_color: Optional[Dict[str, Callable[..., Any]]] = None,
-        type_getter: Optional[Callable[[str], Optional["ExcelType"]]] = None,
+        type_getter: Optional[Callable[[str], Optional['ExcelType']]] = None,
     ):
         super().__init__()
         if validator is not None and validators is not None:
-            raise ValueError("Cannot specify both validator and validators")
+            raise ValueError('Cannot specify both validator and validators')
         if getter_cell_color is not None and getters_cell_color is not None:
-            raise ValueError("Cannot specify both getter_cell_color and getters_cell_color")
+            raise ValueError(
+                'Cannot specify both getter_cell_color and getters_cell_color'
+            )
+        self.getter = getter
         self.validator = validator
         self.validators = validators or {}
         self.getter_cell_color = getter_cell_color
@@ -158,7 +165,7 @@ class DynamicColumn(BaseDescriptor):
         # Then check for general getter
         return self.getter_cell_color
 
-    def get_excel_type(self, column_name: str) -> Optional["ExcelType"]:
+    def get_excel_type(self, column_name: str) -> Optional['ExcelType']:
         """
         Get the Excel type for a specific dynamic column.
 

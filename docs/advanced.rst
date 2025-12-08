@@ -112,7 +112,7 @@ Here's a complete FastAPI example showing upload and download:
 Dynamic Columns
 ---------------
 
-Models support dynamic columns that are detected at runtime in the ``.from_excel()`` method. This feature is designed for scenarios where administrators can add new characteristics or fields to be uploaded via Excel, without requiring changes to the model definition.
+Use :class:`~serializable_excel.descriptors.DynamicColumn` to handle columns that are not known at design time. Values are stored in a ``dict`` on the model. You can apply validators, cell color getters, and now also provide a getter function to compute the dynamic values during export.
 
 How Dynamic Columns Work
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -137,6 +137,12 @@ Consider a forecasting system where each forecast has static fields (month, cura
        INTEGER = 'Integer'
        STRING = 'String'
 
+   def type_dynamic(column_name: str, row_data: dict) -> ExcelType:
+       """Return ExcelType for a dynamic column."""
+       if column_name == "Sales":
+           return ExcelType.INTEGER
+       return ExcelType.STRING
+
    class ForecastModel(ExcelModel):
        # Static fields - always present in Excel
        month: str = Column(header="Month")
@@ -145,7 +151,11 @@ Consider a forecasting system where each forecast has static fields (month, cura
        object_title: str = Column(header="Object")
        
        # Dynamic characteristics - detected from Excel headers at runtime
-       characteristics: dict = DynamicColumn()
+       characteristics: dict = DynamicColumn(
+           getter=lambda inst: {"Sales": inst.monthly_sales, "Priority": inst.priority},
+           getter_cell_color=lambda val, row, col, idx: CellStyle(fill_color=Colors.CHANGED) if val and int(val) > 100 else None,
+           type_getter=type_dynamic,
+       )
 
    # Read forecasts with dynamic characteristics
    forecasts = ForecastModel.from_excel(
@@ -459,18 +469,20 @@ Column Parameters Summary
    * - ``header``
      - Excel column header name
      - Column
-   * - ``validator``
-     - Function to validate/transform value when reading
-     - Column, DynamicColumn
+   * - ``getter`` (DynamicColumn)
+     - Callable that receives the model instance and returns a ``dict[str, Any]`` with dynamic columns and their values. Useful when dynamic data is derived rather than stored directly on the model.
+     - DynamicColumn
+   * - ``getter`` (Column)
+     - Function to extract value from model when writing
+     - Column
+   * - ``validator`` or ``validators``
+     - Validate values when reading. Either a single validator for all columns or a per-column mapping.
+     - DynamicColumn
    * - ``validators``
      - Dictionary of validators per column name
      - DynamicColumn
-   * - ``getter``
-     - Function to extract value from model when writing
-     - Column
-   * - ``getter_cell_color``
-     - Function to determine cell style when writing
-     - Column, DynamicColumn
+   * - ``getter_cell_color`` or ``getters_cell_color``\ :
+    Return :class:`~serializable_excel.colors.CellStyle` for cells.
    * - ``getters_cell_color``
      - Dictionary of style getters per column name
      - DynamicColumn

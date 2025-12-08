@@ -131,18 +131,22 @@ Descriptor for defining dynamic columns that are detected at runtime.
 
    Descriptor for defining dynamic columns that are detected at runtime in Excel files.
 
-   .. py:method:: __init__(validator: Optional[Callable[[str, str], Any]] = None, validators: Optional[Dict[str, Callable]] = None, getter_cell_color: Optional[Callable] = None, getters_cell_color: Optional[Dict[str, Callable]] = None)
+   .. py:method:: __init__(getter: Optional[Callable[[Any], Dict[str, Any]]] = None, validator: Optional[Callable[[str, str], Any]] = None, validators: Optional[Dict[str, Callable]] = None, getter_cell_color: Optional[Callable] = None, getters_cell_color: Optional[Dict[str, Callable]] = None, type_getter: Optional[Callable[[str], Optional[ExcelType]]] = None)
 
-      Initialize a DynamicColumn descriptor.
+   Initialize a DynamicColumn descriptor.
 
-      :param validator: Function to validate all dynamic columns. Receives (column_name: str, value: str) and returns validated value.
-      :type validator: Optional[Callable[[str, str], Any]]
-      :param validators: Dictionary mapping column names to validator functions. Each validator receives (column_name: str, value: str) and returns validated value.
-      :type validators: Optional[Dict[str, Callable[[str, str], Any]]]
-      :param getter_cell_color: Function to determine cell style for all dynamic columns. Signature: (cell_value, row_data, column_name, row_index) -> Optional[CellStyle]
-      :type getter_cell_color: Optional[Callable[[Any, Dict[str, Any], str, int], Optional[CellStyle]]]
-      :param getters_cell_color: Dictionary mapping column names to style getter functions. Each function has same signature as getter_cell_color.
-      :type getters_cell_color: Optional[Dict[str, Callable[[Any, Dict[str, Any], str, int], Optional[CellStyle]]]]
+   :param getter: Function to extract dynamic values when exporting to Excel. Should accept the model instance and return a ``dict[str, Any]`` of column names to values.
+   :type getter: Optional[Callable[[Any], Dict[str, Any]]]
+   :param validator: Function to validate all dynamic columns. Receives (column_name: str, value: str) and returns validated value.
+   :type validator: Optional[Callable[[str, str], Any]]
+   :param validators: Dictionary mapping column names to validator functions. Each validator receives (column_name: str, value: str) and returns validated value.
+   :type validators: Optional[Dict[str, Callable[[str, str], Any]]]
+   :param getter_cell_color: Function to determine cell style for all dynamic columns. Signature: (cell_value, row_data, column_name, row_index) -> Optional[CellStyle]
+   :type getter_cell_color: Optional[Callable[[Any, Dict[str, Any], str, int], Optional[CellStyle]]]
+   :param getters_cell_color: Dictionary mapping column names to style getter functions. Each function has same signature as getter_cell_color.
+   :type getters_cell_color: Optional[Dict[str, Callable[[Any, Dict[str, Any], str, int], Optional[CellStyle]]]]
+   :param type_getter: Function to determine Excel type for dynamic columns. Signature: (column_name: str) -> Optional[ExcelType].
+   :type type_getter: Optional[Callable[[str], Optional[ExcelType]]]
 
       Example:
 
@@ -170,6 +174,14 @@ Descriptor for defining dynamic columns that are detected at runtime.
 
          class ForecastModel(ExcelModel):
              characteristics: dict = DynamicColumn(getter_cell_color=highlight_dynamic)
+
+         # With getter to compute values on the fly
+         class ForecastModel(ExcelModel):
+             name: str = Column(header="Name")
+             characteristics: dict = DynamicColumn(
+                 getter=lambda inst: {"Sales": inst.sales_total, "Priority": inst.priority},
+                 type_getter=lambda col: ExcelType.INTEGER if col == "Sales" else None,
+             )
 
 CellStyle and Colors
 --------------------
