@@ -14,7 +14,7 @@ from serializable_excel.field_extractor import FieldExtractor
 from serializable_excel.field_metadata import FieldMetadataExtractor
 from serializable_excel.validators import FieldValidator
 
-T = TypeVar("T", bound="ExcelModel")
+T = TypeVar('T', bound='ExcelModel')
 
 # Module-level storage for singletons to avoid Pydantic conflicts
 _singletons: Dict[type, Dict[str, any]] = {}
@@ -27,7 +27,7 @@ class ExcelModel(BaseModel):
     Inherit from this class and define fields using Column() or DynamicColumn() descriptors.
     """
 
-    model_config = {"arbitrary_types_allowed": True}
+    model_config = {'arbitrary_types_allowed': True}
 
     @classmethod
     def _get_singletons(cls) -> Dict[str, any]:
@@ -40,26 +40,26 @@ class ExcelModel(BaseModel):
     def _get_reader(cls) -> ExcelReader:
         """Get or create ExcelReader instance (lazy initialization)."""
         singletons = cls._get_singletons()
-        if "reader" not in singletons:
+        if 'reader' not in singletons:
             metadata_extractor = FieldMetadataExtractor()
             validator = FieldValidator()
-            singletons["reader"] = ExcelReader(metadata_extractor, validator)
-        return singletons["reader"]
+            singletons['reader'] = ExcelReader(metadata_extractor, validator)
+        return singletons['reader']
 
     @classmethod
     def _get_writer(cls) -> ExcelWriter:
         """Get or create ExcelWriter instance (lazy initialization)."""
         singletons = cls._get_singletons()
-        if "writer" not in singletons:
+        if 'writer' not in singletons:
             metadata_extractor = FieldMetadataExtractor()
             field_extractor = FieldExtractor()
             color_extractor = ColorExtractor()
-            singletons["writer"] = ExcelWriter(
+            singletons['writer'] = ExcelWriter(
                 metadata_extractor,
                 field_extractor,
                 color_extractor,
             )
-        return singletons["writer"]
+        return singletons['writer']
 
     @classmethod
     def from_excel(
@@ -104,9 +104,6 @@ class ExcelModel(BaseModel):
         column_order: Optional[
             Union[Callable[[str], Optional[int]], Dict[str, int]]
         ] = None,
-        dynamic_column_order: Optional[
-            Callable[[Dict[str, int]], Dict[str, int]]
-        ] = None,
     ) -> Optional[bytes]:
         """
         Export model instances to an Excel file or return as bytes.
@@ -119,9 +116,6 @@ class ExcelModel(BaseModel):
             column_order: Optional function to specify order for static columns.
                          Takes header name (str) and returns order number (int) or None.
                          Can also be a dict mapping header names to order numbers.
-            dynamic_column_order: Optional function to specify order for dynamic columns.
-                                Takes dict {title: order} and returns normalized dict {title: normalized_order}.
-                                The function should normalize orders (remove gaps, make sequential).
 
         Returns:
             bytes if return_bytes=True, None otherwise
@@ -147,15 +141,10 @@ class ExcelModel(BaseModel):
                 order_map = {"Email": 1, "Name": 2, "Age": 3}
                 return order_map.get(header)
 
-            def dynamic_order(orders: Dict[str, int]) -> Dict[str, int]:
-                sorted_items = sorted(orders.items(), key=lambda x: x[1])
-                return {title: idx + 1 for idx, (title, _) in enumerate(sorted_items)}
-
             UserModel.to_excel(
                 users,
                 "output.xlsx",
                 column_order=static_order,
-                dynamic_column_order=dynamic_order
             )
         """
         writer = cls._get_writer()
@@ -165,5 +154,4 @@ class ExcelModel(BaseModel):
             file_path,
             return_bytes,
             column_order,
-            dynamic_column_order,
         )

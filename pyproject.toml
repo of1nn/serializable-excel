@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "serializable-excel"
-version = "0.1.4"
+version = "0.1.5"
 description = "A user-friendly Python library for seamless bidirectional conversion between Excel spreadsheets and Pydantic models"
 readme = "README.md"
 requires-python = ">=3.8"
