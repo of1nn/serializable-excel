@@ -2,7 +2,7 @@
 SerializableExcel - A library for bidirectional conversion between Excel and Pydantic models.
 """
 
-__version__ = '0.1.3'
+__version__ = "0.1.4"
 
 from serializable_excel.colors import CellStyle, Colors
 from serializable_excel.descriptors import Column, DynamicColumn
@@ -21,20 +21,20 @@ from serializable_excel.models import ExcelModel
 
 __all__ = [
     # Model
-    'ExcelModel',
+    "ExcelModel",
     # Descriptors
-    'Column',
-    'DynamicColumn',
+    "Column",
+    "DynamicColumn",
     # Exceptions
-    'ExcelModelError',
-    'ValidationError',
-    'ColumnNotFoundError',
+    "ExcelModelError",
+    "ValidationError",
+    "ColumnNotFoundError",
     # Styling
-    'CellStyle',
-    'Colors',
+    "CellStyle",
+    "Colors",
     # Excel Types
-    'ExcelType',
-    'ExcelText',
-    'ExcelNumber',
-    'ExcelDate',
+    "ExcelType",
+    "ExcelText",
+    "ExcelNumber",
+    "ExcelDate",
 ]

@@ -3,7 +3,7 @@ ExcelModel - Base class for Excel-serializable Pydantic models.
 """
 
 from io import BytesIO
-from typing import Dict, List, Optional, Type, TypeVar, Union
+from typing import Callable, Dict, List, Optional, Type, TypeVar, Union
 
 from pydantic import BaseModel
 
@@ -101,6 +101,12 @@ class ExcelModel(BaseModel):
         instances: List[T],
         file_path: Optional[str] = None,
         return_bytes: bool = False,
+        column_order: Optional[
+            Union[Callable[[str], Optional[int]], Dict[str, int]]
+        ] = None,
+        dynamic_column_order: Optional[
+            Callable[[Dict[str, int]], Dict[str, int]]
+        ] = None,
     ) -> Optional[bytes]:
         """
         Export model instances to an Excel file or return as bytes.
@@ -110,6 +116,12 @@ class ExcelModel(BaseModel):
             file_path: Path where to save the Excel file (.xlsx).
                        Required if return_bytes=False.
             return_bytes: If True, return Excel content as bytes instead of saving to file.
+            column_order: Optional function to specify order for static columns.
+                         Takes header name (str) and returns order number (int) or None.
+                         Can also be a dict mapping header names to order numbers.
+            dynamic_column_order: Optional function to specify order for dynamic columns.
+                                Takes dict {title: order} and returns normalized dict {title: normalized_order}.
+                                The function should normalize orders (remove gaps, make sequential).
 
         Returns:
             bytes if return_bytes=True, None otherwise
@@ -129,6 +141,29 @@ class ExcelModel(BaseModel):
                 media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 headers={"Content-Disposition": "attachment; filename=users.xlsx"}
             )
+
+            # With column ordering
+            def static_order(header: str) -> Optional[int]:
+                order_map = {"Email": 1, "Name": 2, "Age": 3}
+                return order_map.get(header)
+
+            def dynamic_order(orders: Dict[str, int]) -> Dict[str, int]:
+                sorted_items = sorted(orders.items(), key=lambda x: x[1])
+                return {title: idx + 1 for idx, (title, _) in enumerate(sorted_items)}
+
+            UserModel.to_excel(
+                users,
+                "output.xlsx",
+                column_order=static_order,
+                dynamic_column_order=dynamic_order
+            )
         """
         writer = cls._get_writer()
-        return writer.write(cls, instances, file_path, return_bytes)
+        return writer.write(
+            cls,
+            instances,
+            file_path,
+            return_bytes,
+            column_order,
+            dynamic_column_order,
+        )

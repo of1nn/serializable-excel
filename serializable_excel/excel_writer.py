@@ -2,7 +2,7 @@
 Excel file writer with separation of concerns.
 """
 
-from typing import Any, Dict, List, Optional, TypeVar
+from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
 
 from serializable_excel.color_extractor import ColorExtractor
 from serializable_excel.descriptors import Column, DynamicColumn
@@ -11,7 +11,7 @@ from serializable_excel.excel_types import ExcelType
 from serializable_excel.field_extractor import FieldExtractor
 from serializable_excel.field_metadata import FieldMetadataExtractor
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class ExcelWriter:
@@ -44,6 +44,12 @@ class ExcelWriter:
         instances: List[Any],
         file_path: Optional[str] = None,
         return_bytes: bool = False,
+        column_order: Optional[
+            Union[Callable[[str], Optional[int]], Dict[str, int]]
+        ] = None,
+        dynamic_column_order: Optional[
+            Callable[[Dict[str, int]], Dict[str, int]]
+        ] = None,
     ) -> Optional[bytes]:
         """
         Export model instances to an Excel file or return as bytes.
@@ -53,6 +59,11 @@ class ExcelWriter:
             instances: List of model instances to export
             file_path: Path where to save the Excel file (required if return_bytes=False)
             return_bytes: If True, return Excel content as bytes instead of saving to file
+            column_order: Optional function or dict to specify order for static columns.
+                        If function: takes header name (str) and returns order number (int) or None.
+                        If dict: maps header names to order numbers.
+            dynamic_column_order: Optional function to specify order for dynamic columns.
+                                Takes dict {title: order} and returns normalized dict {title: normalized_order}.
 
         Returns:
             bytes if return_bytes=True, None otherwise
@@ -62,20 +73,26 @@ class ExcelWriter:
             ValueError: If file_path is not provided when return_bytes=False
         """
         if not instances:
-            raise ValueError('Cannot export empty list of instances')
+            raise ValueError("Cannot export empty list of instances")
 
         if not return_bytes and not file_path:
-            raise ValueError('file_path is required when return_bytes=False')
+            raise ValueError("file_path is required when return_bytes=False")
 
         column_fields = self.metadata_extractor.get_column_fields(model_class)
         if not column_fields:
-            raise ValueError('No Column fields defined in model')
+            raise ValueError("No Column fields defined in model")
 
         dynamic_field = self.metadata_extractor.get_dynamic_column_field(
             model_class
         )
 
-        headers = self._build_headers(column_fields, dynamic_field, instances)
+        headers = self._build_headers(
+            column_fields,
+            dynamic_field,
+            instances,
+            column_order,
+            dynamic_column_order,
+        )
         data_rows = self._build_data_rows(
             instances, column_fields, dynamic_field, headers
         )
@@ -121,24 +138,140 @@ class ExcelWriter:
         column_fields: Dict[str, Any],
         dynamic_field: Any,
         instances: List[Any],
+        column_order: Optional[
+            Union[Callable[[str], Optional[int]], Dict[str, int]]
+        ] = None,
+        dynamic_column_order: Optional[
+            Callable[[Dict[str, int]], Dict[str, int]]
+        ] = None,
     ) -> Dict[str, int]:
-        """Build headers mapping for Excel export."""
-        headers: Dict[str, int] = {}
-        col_idx = 1
+        """
+        Build headers mapping for Excel export with optional column ordering.
 
-        # Add static column headers
+        Args:
+            column_fields: Dictionary mapping field names to Column descriptors
+            dynamic_field: DynamicColumn descriptor or None
+            instances: List of model instances
+            column_order: Optional function or dict to specify order for static columns
+            dynamic_column_order: Optional function to specify order for dynamic columns
+
+        Returns:
+            Dictionary mapping header names to column indices (1-indexed)
+        """
+        # Collect static column orders
+        static_orders: Dict[str, Optional[int]] = {}
         for field_name, column in column_fields.items():
-            headers[column.header] = col_idx
-            col_idx += 1
+            header = column.header
+            if column_order is not None:
+                if callable(column_order):
+                    static_orders[header] = column_order(header)
+                elif isinstance(column_order, dict):
+                    static_orders[header] = column_order.get(header)
+                else:
+                    static_orders[header] = None
+            else:
+                static_orders[header] = None
 
-        # Add dynamic column headers
+        # Collect dynamic column orders
+        dynamic_orders: Dict[str, int] = {}
+        if dynamic_field is not None:
+            all_dynamic_keys = self._collect_dynamic_keys(
+                instances, dynamic_field
+            )
+            # Only assign orders if dynamic_column_order function is provided
+            if dynamic_column_order is not None:
+                # Create initial dict with sorted order as default
+                initial_dynamic_orders = {
+                    key: idx + 1
+                    for idx, key in enumerate(sorted(all_dynamic_keys))
+                }
+                # Call the function to get normalized orders
+                dynamic_orders = dynamic_column_order(initial_dynamic_orders)
+            # If no ordering function, dynamic_orders remains empty (no order assigned)
+
+        # Normalize all order numbers (remove gaps, make sequential)
+        all_orders: Dict[str, int] = {}
+
+        # Add static columns with orders
+        for header, order in static_orders.items():
+            if order is not None:
+                all_orders[header] = order
+
+        # Add dynamic columns with orders
+        for header, order in dynamic_orders.items():
+            all_orders[header] = order
+
+        # Normalize orders: create mapping old_order -> new_order (sequential 1,2,3...)
+        if all_orders:
+            # Get unique order values and sort them
+            unique_orders = sorted(set(all_orders.values()))
+            # Create mapping: old_order -> new_order (sequential)
+            order_mapping = {
+                old_order: new_order
+                for new_order, old_order in enumerate(unique_orders, start=1)
+            }
+
+            # Apply normalization
+            normalized_orders: Dict[str, int] = {}
+            for header, old_order in all_orders.items():
+                normalized_orders[header] = order_mapping[old_order]
+        else:
+            normalized_orders = {}
+
+        # Separate columns with and without orders
+        # Columns with order (both static and dynamic) are mixed together
+        columns_with_order: List[
+            tuple[str, int, bool]
+        ] = []  # (header, order, is_static)
+        static_without_order: List[str] = []
+        dynamic_without_order: List[str] = []
+
+        # Process static columns
+        for field_name, column in column_fields.items():
+            header = column.header
+            if header in normalized_orders:
+                columns_with_order.append(
+                    (header, normalized_orders[header], True)
+                )
+            else:
+                static_without_order.append(header)
+
+        # Process dynamic columns
         if dynamic_field is not None:
             all_dynamic_keys = self._collect_dynamic_keys(
                 instances, dynamic_field
             )
             for key in sorted(all_dynamic_keys):
-                headers[key] = col_idx
-                col_idx += 1
+                if key in normalized_orders:
+                    columns_with_order.append(
+                        (key, normalized_orders[key], False)
+                    )
+                else:
+                    dynamic_without_order.append(key)
+
+        # Sort all columns with order by their normalized order number
+        # If order numbers are equal, sort by column name (header) alphabetically
+        # This allows dynamic columns to be before static if they have lower order numbers
+        columns_with_order.sort(key=lambda x: (x[1], x[0]))
+
+        # Build final headers dict
+        headers: Dict[str, int] = {}
+        col_idx = 1
+
+        # Add all columns with order (mixed static and dynamic, sorted by order)
+        for header, _, _ in columns_with_order:
+            headers[header] = col_idx
+            col_idx += 1
+
+        # Add static columns without order (after columns with order)
+        for header in static_without_order:
+            headers[header] = col_idx
+            col_idx += 1
+
+        # Add dynamic columns without order (at the end)
+        for header in dynamic_without_order:
+            headers[header] = col_idx
+            col_idx += 1
 
         return headers
 

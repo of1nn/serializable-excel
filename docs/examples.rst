@@ -291,9 +291,70 @@ Using SerializableExcel with Flask:
            download_name="products.xlsx"
        )
 
+Example 9: Custom Column Ordering
+----------------------------------
+
+Control the order of columns in exported Excel files:
+
+.. code-block:: python
+
+   from typing import Optional, Dict
+   from serializable_excel import ExcelModel, Column, DynamicColumn
+
+   class ForecastModel(ExcelModel):
+       month: str = Column(header="Month")
+       manager: str = Column(header="Manager")
+       characteristics: dict = DynamicColumn()
+
+   # Order static columns using a function
+   def static_order(header: str) -> Optional[int]:
+       """Manager first, then Month"""
+       order_map = {"Manager": 1, "Month": 2}
+       return order_map.get(header)
+
+   # Order dynamic columns using order_layer from database
+   def dynamic_order(orders: Dict[str, int]) -> Dict[str, int]:
+       """
+       Normalize dynamic column orders based on order_layer.
+       Columns with same order are sorted alphabetically.
+       """
+       # Simulate fetching order_layer from database
+       initial_orders = {"Sales": 1, "Priority": 5, "Status": 10}
+       
+       # Update with database values
+       for key in orders:
+           if key in initial_orders:
+               orders[key] = initial_orders[key]
+       
+       # Normalize: sort by order and create sequential numbers (1, 5, 10 -> 1, 2, 3)
+       sorted_items = sorted(orders.items(), key=lambda x: x[1])
+       return {title: idx + 1 for idx, (title, _) in enumerate(sorted_items)}
+
+   forecasts = [
+       ForecastModel(
+           month="2024-01",
+           manager="Alice",
+           characteristics={"Sales": 150, "Priority": "High", "Status": "Active"}
+       )
+   ]
+
+   # Export with custom column order
+   ForecastModel.to_excel(
+       forecasts,
+       "forecasts.xlsx",
+       column_order=static_order,
+       dynamic_column_order=dynamic_order
+   )
+   # Result: Manager, Month, Sales, Priority, Status
+   # (Dynamic columns can appear before static if they have lower order numbers)
+
+   # Or use a dictionary for static columns
+   column_order_dict = {"Email": 1, "Name": 2, "Age": 3}
+   UserModel.to_excel(users, "users.xlsx", column_order=column_order_dict)
+
 Next Steps
 ----------
 
-* :doc:`advanced` - Learn about advanced features like dynamic columns, validators, and cell styling
+* :doc:`advanced` - Learn about advanced features like dynamic columns, validators, cell styling, and column ordering
 * :doc:`api` - Full API reference
 

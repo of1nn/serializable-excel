@@ -456,6 +456,150 @@ Or use custom HEX colors:
    style = CellStyle(fill_color="FF0000")  # Red background
    style = CellStyle(font_color="0000FF")  # Blue text
 
+Column Ordering
+---------------
+
+You can control the order of columns in exported Excel files using the ``column_order`` and ``dynamic_column_order`` parameters in ``to_excel()``. This is useful when you need specific column arrangements, such as placing dynamic characteristics before static fields.
+
+Static Column Ordering
+~~~~~~~~~~~~~~~~~~~~~~
+
+For static columns, you can provide either a function or a dictionary:
+
+Using a Function
+^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+   from typing import Optional
+   from serializable_excel import ExcelModel, Column
+
+   class UserModel(ExcelModel):
+       name: str = Column(header="Name")
+       age: int = Column(header="Age")
+       email: str = Column(header="Email")
+
+   def column_order(header: str) -> Optional[int]:
+       """Specify order: Email first, then Name, then Age"""
+       order_map = {"Email": 1, "Name": 2, "Age": 3}
+       return order_map.get(header)
+
+   users = [UserModel(name="Alice", age=25, email="alice@test.com")]
+   UserModel.to_excel(users, "output.xlsx", column_order=column_order)
+   # Columns will be: Email, Name, Age
+
+Using a Dictionary
+^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+   column_order_dict = {"Email": 1, "Name": 2, "Age": 3}
+   UserModel.to_excel(users, "output.xlsx", column_order=column_order_dict)
+
+Dynamic Column Ordering
+~~~~~~~~~~~~~~~~~~~~~~~
+
+For dynamic columns, provide a function that receives a dictionary of column names and their initial order numbers, and returns a normalized dictionary:
+
+.. code-block:: python
+
+   from typing import Dict
+   from serializable_excel import ExcelModel, Column, DynamicColumn
+
+   class ForecastModel(ExcelModel):
+       month: str = Column(header="Month")
+       manager: str = Column(header="Manager")
+       characteristics: dict = DynamicColumn()
+
+   def dynamic_order(orders: Dict[str, int]) -> Dict[str, int]:
+       """
+       Normalize dynamic column orders.
+       Input: {"Sales": 1, "Priority": 5, "Status": 10}
+       Output: {"Sales": 1, "Priority": 2, "Status": 3} (normalized, no gaps)
+       """
+       sorted_items = sorted(orders.items(), key=lambda x: x[1])
+       return {title: idx + 1 for idx, (title, _) in enumerate(sorted_items)}
+
+   forecasts = [
+       ForecastModel(
+           month="2024-01",
+           manager="Alice",
+           characteristics={"Sales": 150, "Priority": "High", "Status": "Active"}
+       )
+   ]
+
+   ForecastModel.to_excel(
+       forecasts,
+       "output.xlsx",
+       dynamic_column_order=dynamic_order
+   )
+
+Using Database Order Values
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When dynamic columns have order values stored in a database (e.g., ``order_layer`` field), you can use them:
+
+.. code-block:: python
+
+   def dynamic_order(orders: Dict[str, int]) -> Dict[str, int]:
+       """
+       Use order_layer from database to determine column order.
+       Normalize orders to remove gaps (1, 5, 10 -> 1, 2, 3).
+       """
+       # Fetch order_layer values from database
+       initial_orders = {}
+       for title in orders:
+           char = db.query(ForecastCharacteristic).filter_by(title=title).first()
+           if char:
+               initial_orders[title] = char.order_layer
+       
+       # Update orders dict with database values
+       for key in orders:
+           if key in initial_orders:
+               orders[key] = initial_orders[key]
+       
+       # Normalize: sort by order and create sequential numbers
+       sorted_items = sorted(orders.items(), key=lambda x: x[1])
+       return {title: idx + 1 for idx, (title, _) in enumerate(sorted_items)}
+
+Mixed Static and Dynamic Ordering
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When both static and dynamic columns have order numbers, they are normalized together and sorted. Columns with the same order number are sorted alphabetically by name:
+
+.. code-block:: python
+
+   def static_order(header: str) -> Optional[int]:
+       """Manager first, then Month"""
+       order_map = {"Manager": 1, "Month": 2}
+       return order_map.get(header)
+
+   def dynamic_order(orders: Dict[str, int]) -> Dict[str, int]:
+       """Priority first, then Sales"""
+       initial_orders = {"Priority": 1, "Sales": 5}
+       for key in orders:
+           if key in initial_orders:
+               orders[key] = initial_orders[key]
+       sorted_items = sorted(orders.items(), key=lambda x: x[1])
+       return {title: idx + 1 for idx, (title, _) in enumerate(sorted_items)}
+
+   ForecastModel.to_excel(
+       forecasts,
+       "output.xlsx",
+       column_order=static_order,
+       dynamic_column_order=dynamic_order
+   )
+   # All columns with order are normalized together:
+   # Manager (1), Priority (1) -> Manager, Priority (alphabetically)
+   # Month (2), Sales (5) -> Month (2), Sales (3 after normalization)
+
+Order Normalization
+~~~~~~~~~~~~~~~~~~~
+
+Order numbers are automatically normalized to remove gaps. For example, if you specify orders 1, 5, and 10, they will be normalized to 1, 2, and 3. This ensures columns are placed sequentially without empty spaces.
+
+Columns without specified order are placed at the end, maintaining their original order (static columns first, then dynamic columns).
+
 Column Parameters Summary
 -------------------------
 

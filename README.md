@@ -52,6 +52,7 @@ pip install -r requirements.txt
 - **🛡️ Custom Validators**: Define validation functions for data integrity
 - **📤 Custom Getters**: Extract values from complex database models when exporting
 - **🎨 Cell Styling**: Conditional cell formatting with colors, fonts, and styles
+- **📊 Column Ordering**: Control column order in exported Excel files with custom ordering functions
 
 ## Documentation
 
