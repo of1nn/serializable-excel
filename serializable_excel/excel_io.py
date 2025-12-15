@@ -6,6 +6,13 @@ from io import BytesIO
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
 from openpyxl import Workbook, load_workbook
+try:  # разные версии openpyxl по-разному экспортируют классы ячеек
+    from openpyxl.cell.cell import EmptyCell, MergedCell  # type: ignore
+except ImportError:  # fallback для старых/новых версий
+    from openpyxl.cell.cell import MergedCell  # type: ignore
+
+    class EmptyCell:  # minimal stub for isinstance checks
+        pass
 from openpyxl.worksheet.worksheet import Worksheet
 
 from serializable_excel.colors import CellStyle, CellStyleApplier
@@ -53,9 +60,15 @@ def read_excel_rows(
         row_data = {}
         row = worksheet[row_num]
         for cell in row:
-            if cell.column in row_data or cell.value is None:
+            # EmptyCell/MergedCell в openpyxl 3.1 могут не иметь .column
+            if isinstance(cell, (EmptyCell, MergedCell)):
                 continue
-            row_data[cell.column] = cell.value
+            col = getattr(cell, "column", None)
+            if col is None:
+                continue
+            if col in row_data or cell.value is None:
+                continue
+            row_data[col] = cell.value
         # Only add non-empty rows
         if row_data:
             rows.append(row_data)
